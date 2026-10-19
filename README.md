@@ -46,30 +46,37 @@ Dikembangkan secara khusus agar ringan, responsif, dan fleksibel dijalankan di l
 
 Jalankan perintah berikut di terminal Termux Anda:
 
-```bash
+
 # Update paket & instal Python + Git
+```
 pkg update && pkg upgrade -y
 pkg install python git python-lxml -y
-
+```
 # Clone repository ini (atau unduh kodenya)
-git clone [https://github.com/UsernameAnda/md-converter.git](https://github.com/UsernameAnda/md-converter.git)
+```
+git clone https://github.com/ShimaYuu205/md-converter.git
 cd md-converter
-
+```
 # Instal dependensi Python
+```
 pip install pypdf python-docx
 ```
+
 ### 2. Di Windows (CMD / PowerShell)
 ​Buka Command Prompt atau PowerShell, lalu jalankan:
-```
+
 # Clone repository
 
-git clone [https://github.com/UsernameAnda/md-converter.git](https://github.com/UsernameAnda/md-converter.git)
+```
+git clone https://github.com/ShimaYuu205/md-converter.git
 cd md-converter
-
+```
 # Instal dependensi Python
+```
 pip install pypdf python-docx lxml
 
 ```
+
 ## 📕 Cara Penggunaan
 ​Jalankan skrip utama menggunakan perintah berikut:
 ```
@@ -79,6 +86,7 @@ python md.py
 ## Panduan Alur Kerja (Workflow)
 - **Convert File -> Markdown**
   *Pilih menu 1.*
+
   Gunakan navigasi angka untuk memilih file
   yang ingin dikonversi. ​Masukkan nama file
   Markdown kustom (jika tidak mengetik
@@ -88,6 +96,7 @@ python md.py
 - **Convert Isi Folder -> Markdown (Project
   Bundle)**
   *Pilih menu 2.*
+  
   ​Gunakan navigasi folder untuk masuk ke
   direktori proyek web Anda.Ketik 99 untuk
   memilih direktori saat ini.
@@ -98,6 +107,7 @@ python md.py
   file Markdown.
 - **Convert Markdown -> File Asli**
   *​Pilih menu 3.*
+  
   ​Pilih file .md yang ingin dipulihkan.
   ​Jika file .md memiliki metadata tag nama
   asli, sistem akan menanyakan apakah ingin
@@ -105,9 +115,9 @@ python md.py
   otomatis.
 
 **Pilih lokasi direktori tujuan penyimpanan:**
-- 1. Simpan di direktori saat ini.
-- 2. Pilih direktori lain secara interaktif.
-- 3. Buat folder baru di direktori saat ini.
+- Simpan di direktori saat ini.
+- Pilih direktori lain secara interaktif.
+- Buat folder baru di direktori saat ini.
 
 #👤 Penulis / Author
 ​Dibuat dengan ❤️ oleh **ShimaYuu**.

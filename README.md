@@ -89,13 +89,13 @@ python md.py
 ​Ketik 99 untuk memilih direktori saat ini.
 ​Masukkan nama file bundle yang diinginkan (default: nama_folder.md).
 ​Seluruh file HTML, CSS, JS, dll. di dalam folder akan dirangkum rapi ke dalam satu file Markdown.
-​- 3. Convert Markdown -> File Asli
+- 3. Convert Markdown -> File Asli
 ​Pilih menu 3.
 ​Pilih file .md yang ingin dipulihkan.
 ​Jika file .md memiliki metadata tag nama asli, sistem akan menanyakan apakah ingin menggunakan nama asli tersebut secara otomatis.
 
-# ​Pilih lokasi direktori tujuan penyimpanan:
-​1: Simpan di direktori saat ini.
+Pilih lokasi direktori tujuan penyimpanan:
+1: Simpan di direktori saat ini.
 ​2: Pilih direktori lain secara interaktif.
 ​3: Buat folder baru di direktori saat ini.
 

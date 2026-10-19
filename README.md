@@ -57,22 +57,27 @@ cd md-converter
 
 # Instal dependensi Python
 pip install pypdf python-docx
-
-2. Di Windows (CMD / PowerShell)
+```
+### 2. Di Windows (CMD / PowerShell)
 ​Buka Command Prompt atau PowerShell, lalu jalankan:
+```
 # Clone repository
+
 git clone [https://github.com/UsernameAnda/md-converter.git](https://github.com/UsernameAnda/md-converter.git)
 cd md-converter
 
 # Instal dependensi Python
 pip install pypdf python-docx lxml
 
-Cara Penggunaan
+```
+## 📕 Cara Penggunaan
 ​Jalankan skrip utama menggunakan perintah berikut:
-
+```
 python md.py
+```
 
-Panduan Alur Kerja (Workflow)
+## Panduan Alur Kerja (Workflow)
+
 ​1. Convert File -> Markdown
 ​Pilih menu 1.
 ​Gunakan navigasi angka untuk memilih file yang ingin dikonversi.
@@ -92,7 +97,9 @@ Panduan Alur Kerja (Workflow)
 ​1: Simpan di direktori saat ini.
 ​2: Pilih direktori lain secara interaktif.
 ​3: Buat folder baru di direktori saat ini.
-​👤 Penulis / Author
+
+##​👤 Penulis / Author
 ​Dibuat dengan ❤️ oleh ShimaYuu.
-​📄 Lisensi
+
+​##📄 Lisensi
 ​Proyek ini terlisensi di bawah MIT License.

@@ -114,7 +114,12 @@ def browse_and_select(current_dir, target_type="file"):
 def convert_single_file():
     print_banner()
     print("--- 1. Convert File ke Markdown ---")
-    selected_file = browse_and_select(os.getcwd(), target_type="file")
+    # Awal direktori diarahkan ke Downloads / Storage
+    start_dir = os.path.expanduser("~/storage/downloads")
+    if not os.path.exists(start_dir):
+        start_dir = os.getcwd()
+        
+    selected_file = browse_and_select(start_dir, target_type="file")
     if not selected_file:
         return
 
@@ -172,7 +177,11 @@ def convert_single_file():
 def convert_folder():
     print_banner()
     print("--- 2. Convert Isi Folder ke Markdown (Bundle) ---")
-    target_dir = browse_and_select(os.getcwd(), target_type="folder")
+    start_dir = os.path.expanduser("~/storage/downloads")
+    if not os.path.exists(start_dir):
+        start_dir = os.getcwd()
+        
+    target_dir = browse_and_select(start_dir, target_type="folder")
     if not target_dir:
         return
 
@@ -231,8 +240,12 @@ def convert_folder():
 
 def convert_md_to_file():
     print_banner()
-    print("--- 3. Convert Markdown ke File Asli (Single / Unbundle Folder) ---")
-    selected_md = browse_and_select(os.getcwd(), target_type="file")
+    print("--- 3. Convert Markdown ke File Asli / Unbundle ---")
+    start_dir = os.path.expanduser("~/storage/downloads")
+    if not os.path.exists(start_dir):
+        start_dir = os.getcwd()
+        
+    selected_md = browse_and_select(start_dir, target_type="file")
     if not selected_md or not selected_md.endswith('.md'):
         print("\033[1;31mHarap pilih file berformat .md (Markdown)!\033[0m")
         input("\nTekan [Enter] untuk kembali...")

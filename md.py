@@ -3,7 +3,15 @@ import sys
 import pypdf
 from docx import Document as DocxDocument
 
-SUPPORTED_EXTS = {".pdf", ".docx", ".doc", ".html", ".css", ".js", ".json", ".txt", ".md"}
+# Diperluas untuk mendukung berbagai bahasa pemrograman dan format dokumen
+SUPPORTED_EXTS = {
+    # Dokumen & Teks
+    ".pdf", ".docx", ".doc", ".txt", ".md", ".json", ".yaml", ".yml",
+    # Web & Script
+    ".html", ".css", ".js", ".ts", ".jsx", ".tsx", ".php",
+    # Bahasa Pemrograman Lainnya
+    ".py", ".cpp", ".c", ".h", ".java", ".cs", ".go", ".rs", ".rb", ".sh", ".sql"
+}
 
 def clear_screen():
     os.system('clear' if os.name == 'posix' else 'cls')
@@ -11,24 +19,11 @@ def clear_screen():
 def print_banner():
     clear_screen()
     banner = "\033[1;36m" + r"""
-                   /$$      /$$ /$$$$$$$                                        
-                  | $$$    /$$$| $$__  $$                                       
-                  | $$$$  /$$$$| $$  \ $$  /$$$$$$$                             
-                  | $$ $$/$$ $$| $$  | $$ /$$_____/                             
-                  | $$  $$$| $$| $$  | $$| $$                                   
-                  | $$\  $ | $$| $$  | $$| $$                                   
-                  | $$ \/  | $$| $$$$$$$/|  $$$$$$$                             
-                  |__/     |__/|_______/  \_______/                             
-                                                                                
-                                                                                
-                                                                                
-  /$$$$$$  /$$       /$$                         /$$     /$$                    
- /$$__  $$| $$      |__/                        |  $$   /$$/                    
-| $$  \__/| $$$$$$$  /$$ /$$$$$$/$$$$   /$$$$$$  \  $$ /$$/  /$$   /$$ /$$   /$$
-|  $$$$$$ | $$__  $$| $$| $$_  $$_  $$ |____  $$  \  $$$$/  | $$  | $$| $$  | $$
- \____  $$| $$  \ $$| $$| $$ \ $$ \ $$  /$$$$$$$   \  $$/   | $$  | $$| $$  | $$
- /$$  \ $$| $$  | $$| $$| $$ | $$ | $$ /$$__  $$    | $$    | $$  | $$| $$  | $$
-|  $$$$$$/| $$  | $$| $$| $$ | $$ | $$|  $$$$$$$    | $$    |  $$$$$$/|  $$$$$$/
+                   /$$      /$$/$$$$$$$\vert{}$$$/$$$\vert{}$$__  $$\vert{}$$$$/$$$$\vert{}$$  \ $$/$$$$$$$                             
+                  | $$ $$/$$ $$| $$\vert{}$$ /$$_____/ \vert{} $$  $$$\vert{}$$| $$\vert{}$$| $$\vert{}$$\  $\vert{}$$| $$\vert{}$$| $$\vert{}$$ \/  | $$\vert{}$$$$$$$/\vert{}$$$$$$$ \vert{}__/     \vert{}__/\vert{}_______/  \_______/    /$$$$$$/$$       /$$/$$     /$$/$$__  $$\vert{}$$      |__/                        |  $$/$$/                    
+| $$\__/\vert{}$$$$$$$  /$$/$$$$$$/$$$$/$$$$$$\ $$ /$$/  /$$   /$$/$$   /$$\vert{}$$$$$$ | $$__$$| $$\vert{}$$_  $$_$$ |____  $$\ $$$$/  | $$\vert{}$$| $$\vert{}$$
+ \____  $$\vert{}$$  \ $$\vert{}$$| $$\ $$ \ $$/$$$$$$$\ $$/   | $$\vert{}$$| $$\vert{}$$
+ /$$\ $$| $$\vert{}$$| $$\vert{}$$ | $$\vert{}$$ /$$__$$    | $$\vert{}$$  | $$\vert{}$$  | $$\vert{}$$$$$$/\vert{}$$  | $$\vert{}$$| $$\vert{}$$ | $$\vert{}$$$$$$$    | $$\vert{}$$$$$$/\vert{}$$$$$$/
  \______/ |__/  |__/|__/|__/ |__/ |__/ \_______/    |__/     \______/  \______/ 
                                                                                 
                                                                                 
@@ -37,7 +32,7 @@ def print_banner():
     """ + "\033[0m"
     print(banner)
     print("\033[1;33m=== ULTIMATE MARKDOWN CONVERTER ===\033[0m")
-    print("\033[0;32mSupport Format:\033[0m PDF, DOCX, DOC, HTML, CSS, JS, JSON, TXT, MD")
+    print("\033[0;32mSupport Format:\033[0m PDF, DOCX, DOC, HTML, CSS, JS, TS, PY, C++, JAVA, JSON, TXT, dll.")
     print("-" * 45)
 
 def browse_and_select(current_dir, target_type="file"):
@@ -114,7 +109,6 @@ def browse_and_select(current_dir, target_type="file"):
 def convert_single_file():
     print_banner()
     print("--- 1. Convert File ke Markdown ---")
-    # Awal direktori diarahkan ke Downloads / Storage
     start_dir = os.path.expanduser("~/storage/downloads")
     if not os.path.exists(start_dir):
         start_dir = os.getcwd()
@@ -210,6 +204,30 @@ def convert_folder():
     combined_text = f"# Bundle Proyek: {folder_name}\n\n"
     count = 0
 
+    # Pemeta ekstensi ke tag syntax highlighting Markdown
+    ext_map = {
+        ".js": "javascript",
+        ".ts": "typescript",
+        ".jsx": "jsx",
+        ".tsx": "tsx",
+        ".py": "python",
+        ".cpp": "cpp",
+        ".c": "c",
+        ".java": "java",
+        ".cs": "csharp",
+        ".go": "go",
+        ".rs": "rust",
+        ".rb": "ruby",
+        ".php": "php",
+        ".sh": "bash",
+        ".sql": "sql",
+        ".yaml": "yaml",
+        ".yml": "yaml",
+        ".html": "html",
+        ".css": "css",
+        ".json": "json"
+    }
+
     for root, dirs, files in os.walk(target_dir):
         for file in sorted(files):
             if file == os.path.basename(output_md) or file == "md.py":
@@ -220,7 +238,7 @@ def convert_folder():
                 rel_path = os.path.relpath(file_path, target_dir)
                 
                 combined_text += f"## File: `{rel_path}`\n\n"
-                lang_tag = ext[1:] if ext not in [".js", ".txt", ".md"] else ("javascript" if ext == ".js" else "text")
+                lang_tag = ext_map.get(ext, "text")
                 combined_text += f"```{lang_tag}\n"
                 
                 try:

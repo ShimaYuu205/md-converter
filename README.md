@@ -47,17 +47,17 @@ Dikembangkan secara khusus agar ringan, responsif, dan fleksibel dijalankan di l
 Jalankan perintah berikut di terminal Termux Anda:
 
 
-# Update paket & instal Python + Git
+### Update paket & instal Python + Git
 ```
 pkg update && pkg upgrade -y
 pkg install python git python-lxml -y
 ```
-# Clone repository ini (atau unduh kodenya)
+### Clone repository ini (atau unduh kodenya)
 ```
 git clone https://github.com/ShimaYuu205/md-converter.git
 cd md-converter
 ```
-# Instal dependensi Python
+### Instal dependensi Python
 ```
 pip install pypdf python-docx
 ```
@@ -65,25 +65,25 @@ pip install pypdf python-docx
 ### 2. Di Windows (CMD / PowerShell)
 ​Buka Command Prompt atau PowerShell, lalu jalankan:
 
-# Clone repository
+### Clone repository
 
 ```
 git clone https://github.com/ShimaYuu205/md-converter.git
 cd md-converter
 ```
-# Instal dependensi Python
+### Instal dependensi Python
 ```
 pip install pypdf python-docx lxml
 
 ```
 
-## 📕 Cara Penggunaan
+# 📕 Cara Penggunaan
 ​Jalankan skrip utama menggunakan perintah berikut:
 ```
 python md.py
 ```
 
-## Panduan Alur Kerja (Workflow)
+# Panduan Alur Kerja (Workflow)
 - **Convert File -> Markdown**
   *Pilih menu 1.*
 
@@ -119,8 +119,8 @@ python md.py
 - Pilih direktori lain secara interaktif.
 - Buat folder baru di direktori saat ini.
 
-#👤 Penulis / Author
+##👤 Penulis / Author
 ​Dibuat dengan ❤️ oleh **ShimaYuu**.
 
-​#📄 Lisensi
+​##📄 Lisensi
 ​Proyek ini terlisensi di bawah MIT License.

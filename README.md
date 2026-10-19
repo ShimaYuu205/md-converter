@@ -106,7 +106,7 @@ python md.py
   folder akan dirangkum rapi ke dalam satu
   file Markdown.
 - **Convert Markdown -> File Asli**
-  *​Pilih menu 3.*
+   *​Pilih menu 3.*
   
   ​Pilih file .md yang ingin dipulihkan.
   ​Jika file .md memiliki metadata tag nama
@@ -119,8 +119,9 @@ python md.py
 - Pilih direktori lain secara interaktif.
 - Buat folder baru di direktori saat ini.
 
-##👤 Penulis / Author
+---
+#👤 Penulis / Author
 ​Dibuat dengan ❤️ oleh **ShimaYuu**.
-
-​##📄 Lisensi
+---
+​#📄 Lisensi
 ​Proyek ini terlisensi di bawah MIT License.

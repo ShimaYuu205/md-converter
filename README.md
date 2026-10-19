@@ -85,6 +85,7 @@ python md.py
 
 # Panduan Alur Kerja (Workflow)
 - **Convert File -> Markdown**
+
   *Pilih menu 1.*
 
   Gunakan navigasi angka untuk memilih file
@@ -95,6 +96,7 @@ python md.py
   Konfirmasi konversi (y/n).
 - **Convert Isi Folder -> Markdown (Project
   Bundle)**
+
   *Pilih menu 2.*
   
   ​Gunakan navigasi folder untuk masuk ke
@@ -106,6 +108,7 @@ python md.py
   folder akan dirangkum rapi ke dalam satu
   file Markdown.
 - **Convert Markdown -> File Asli**
+  
    *​Pilih menu 3.*
   
   ​Pilih file .md yang ingin dipulihkan.
@@ -120,8 +123,8 @@ python md.py
 - Buat folder baru di direktori saat ini.
 
 ---
-#👤 Penulis / Author
+👤 Penulis / Author
 ​Dibuat dengan ❤️ oleh **ShimaYuu**.
 ---
-​#📄 Lisensi
+​📄 Lisensi
 ​Proyek ini terlisensi di bawah MIT License.

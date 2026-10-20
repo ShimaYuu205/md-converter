@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "md-converter"
+dynamic = ["version"]
+description = "MDs - konversi dokumen/kode ke Markdown, bundle folder proyek, dan pulihkan kembali"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "ShimaYuu" }]
+keywords = ["markdown", "converter", "cli", "pdf", "docx", "termux", "bundle"]
+dependencies = ["pypdf", "python-docx"]
+
+[project.scripts]
+MDc = "md:main"
+
+[tool.setuptools]
+py-modules = ["md"]
+
+[tool.setuptools.dynamic]
+version = { attr = "md.VERSION" }

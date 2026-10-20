@@ -6,13 +6,15 @@ MDs - Ultimate Markdown Converter
 Mengonversi dokumen/kode ke Markdown, membundel folder proyek menjadi satu
 file .md, dan memulihkannya kembali ke file asli.
 
-Mode interaktif : python md.py
-Mode CLI        : python md.py file  <path> [-o OUT]
-                  python md.py bundle <folder> [-o OUT] [--ext .py,.js]
-                  python md.py restore <file.md> [-d TUJUAN] [--force]
+Mode interaktif : MDc            (atau: python md.py)
+Mode CLI        : MDc file    <path>   [-o OUT] [--force]
+                  MDc bundle  <folder> [-o OUT] [--ext .py,.js] [--ignore POLA]
+                                       [--max-kb N] [--dry-run] [--force]
+                  MDc restore <file.md> [-d TUJUAN] [--dry-run] [--force]
 """
 
 import argparse
+import fnmatch
 import os
 import re
 import shutil
@@ -33,7 +35,7 @@ try:
 except ImportError:
     DocxDocument = None
 
-VERSION = "2.0"
+VERSION = "2.1"
 
 # --------------------------------------------------------------------------
 # Konfigurasi
@@ -141,6 +143,8 @@ def confirm(prompt):
 
 
 def format_size(num_bytes):
+    if num_bytes < 1024:
+        return f"{num_bytes} B"
     return f"{num_bytes / 1024:.1f} KB"
 
 
@@ -369,17 +373,50 @@ def is_prior_bundle(path):
         return False
 
 
-def bundle_folder(target_dir, output_md, exts=None, max_bytes=MAX_FILE_BYTES):
-    """Gabungkan file teks/kode dalam folder ke satu file Markdown.
+def parse_ignore(values):
+    """Ubah teks/daftar pola (dipisah koma) menjadi list pola."""
+    if not values:
+        return []
+    if isinstance(values, str):
+        values = [values]
+    patterns = []
+    for value in values:
+        for part in value.split(","):
+            part = part.strip().replace("\\", "/").strip("/")
+            if part:
+                patterns.append(part)
+    return patterns
 
-    Return dict: count, skipped [(path, alasan)], chars, tokens.
+
+def is_ignored(rel_path, patterns):
+    """Cocokkan path relatif (pemisah '/') dengan pola gaya shell (fnmatch).
+
+    Pola cocok bila mengenai path lengkap, nama file, atau salah satu nama folder.
+    Contoh: 'tests', '*.min.js', 'docs/*', 'src/legacy'.
     """
-    out_abs = os.path.abspath(output_md)
-    folder_name = os.path.basename(os.path.abspath(target_dir)) or "project_bundle"
-    included, skipped = [], []
+    if not patterns:
+        return False
+    parts = rel_path.split("/")
+    prefixes = ["/".join(parts[:i]) for i in range(1, len(parts) + 1)]
+    for pat in patterns:
+        if any(fnmatch.fnmatch(x, pat) for x in prefixes) or \
+                any(fnmatch.fnmatch(p, pat) for p in parts):
+            return True
+    return False
+
+
+def scan_folder(target_dir, exts=None, max_bytes=MAX_FILE_BYTES, ignore=None, exclude_path=None):
+    """Pindai folder tanpa menulis apa pun.
+
+    Return (included [(rel, ext, teks)], skipped [(rel, alasan)], jumlah_diabaikan).
+    """
+    ignore = ignore or []
+    exclude_abs = os.path.abspath(exclude_path) if exclude_path else None
+    included, skipped, ignored = [], [], 0
 
     for root, dirs, files in os.walk(target_dir):
         dirs[:] = sorted(d for d in dirs if d not in IGNORE_DIRS and not d.startswith("."))
+
         for name in sorted(files):
             if name.startswith(".") or name in IGNORE_FILES:
                 continue
@@ -387,9 +424,12 @@ def bundle_folder(target_dir, output_md, exts=None, max_bytes=MAX_FILE_BYTES):
             if ext not in TEXT_EXTS or (exts and ext not in exts):
                 continue
             path = os.path.join(root, name)
-            if os.path.abspath(path) == out_abs or is_prior_bundle(path):
-                continue
             rel = os.path.relpath(path, target_dir).replace(os.sep, "/")
+            if is_ignored(rel, ignore):
+                ignored += 1
+                continue
+            if os.path.abspath(path) == exclude_abs or is_prior_bundle(path):
+                continue
             try:
                 size = os.path.getsize(path)
                 if size > max_bytes:
@@ -400,9 +440,24 @@ def bundle_folder(target_dir, output_md, exts=None, max_bytes=MAX_FILE_BYTES):
                 skipped.append((rel, str(e)))
             except OSError as e:
                 skipped.append((rel, f"gagal dibaca: {e}"))
+    return included, skipped, ignored
+
+
+def bundle_folder(target_dir, output_md, exts=None, max_bytes=MAX_FILE_BYTES,
+                  ignore=None, scanned=None):
+    """Gabungkan file teks/kode dalam folder ke satu file Markdown.
+
+    `scanned` (hasil scan_folder) boleh diberikan agar folder tidak dipindai dua kali.
+    Return dict: count, skipped, ignored, chars, tokens, text.
+    """
+    if scanned is None:
+        scanned = scan_folder(target_dir, exts, max_bytes, ignore, exclude_path=output_md)
+    included, skipped, ignored = scanned
+    folder_name = os.path.basename(os.path.abspath(target_dir)) or "project_bundle"
 
     if not included:
-        return {"count": 0, "skipped": skipped, "chars": 0, "tokens": 0}
+        return {"count": 0, "skipped": skipped, "ignored": ignored,
+                "chars": 0, "tokens": 0, "text": ""}
 
     tree = build_tree([rel for rel, _, _ in included], folder_name)
     tree_fence = make_fence(tree)
@@ -422,6 +477,7 @@ def bundle_folder(target_dir, output_md, exts=None, max_bytes=MAX_FILE_BYTES):
     return {
         "count": len(included),
         "skipped": skipped,
+        "ignored": ignored,
         "chars": len(result),
         "tokens": estimate_tokens(result),
         "text": result,
@@ -459,15 +515,6 @@ def parse_bundle(content):
                     continue
         i += 1
     return entries
-
-
-def existing_targets(entries, dest_dir):
-    found = []
-    for rel, _ in entries:
-        target = safe_join(dest_dir, rel)
-        if target and os.path.exists(target):
-            found.append(rel)
-    return found
 
 
 def extract_entries(entries, dest_dir, overwrite=False):
@@ -608,6 +655,70 @@ def choose_destination(default_dir):
 # Menu interaktif
 # --------------------------------------------------------------------------
 
+def print_bundle_preview(included, skipped, ignored=0, limit=30):
+    """Tampilkan daftar file yang akan dibundle. limit=None -> tampilkan semua."""
+    total_chars = sum(len(text) for _, _, text in included)
+    print(f"\n{GREEN}{len(included)} file akan digabungkan{RESET} "
+          f"(~{format_size(total_chars)}, ~{max(1, total_chars // 4):,} token)")
+    shown = included if limit is None else included[:limit]
+    for rel, _, text in shown:
+        print(f"  + {rel} ({format_size(len(text.encode('utf-8')))})")
+    if len(shown) < len(included):
+        print(f"  ... dan {len(included) - len(shown)} file lainnya")
+    if ignored:
+        print(f"{CYAN}{ignored} file diabaikan oleh pola abaikan{RESET}")
+    if skipped:
+        print(f"{YELLOW}{len(skipped)} file dilewati:{RESET}")
+        shown_skipped = skipped if limit is None else skipped[:10]
+        for rel, reason in shown_skipped:
+            print(f"  - {rel}: {reason}")
+        if len(shown_skipped) < len(skipped):
+            print(f"  ... dan {len(skipped) - len(shown_skipped)} lainnya")
+
+
+def print_restore_preview(entries, dest_dir, limit=30):
+    """Tampilkan daftar file yang akan diekstrak. Return hitungan per status."""
+    rows = []
+    counts = {"baru": 0, "sudah ada": 0, "ditolak": 0}
+    for rel, _ in entries:
+        target = safe_join(dest_dir, rel)
+        if target is None:
+            status = "ditolak"
+        elif os.path.exists(target):
+            status = "sudah ada"
+        else:
+            status = "baru"
+        counts[status] += 1
+        rows.append((rel, status))
+
+    print(f"\n{GREEN}{len(entries)} file akan diekstrak ke:{RESET} {dest_dir}")
+    print(f"  baru: {counts['baru']} | sudah ada: {counts['sudah ada']} "
+          f"| ditolak: {counts['ditolak']}")
+    style = {
+        "baru": (GREEN, "+", ""),
+        "sudah ada": (YELLOW, "~", " (sudah ada)"),
+        "ditolak": (RED, "x", " (path tidak aman)"),
+    }
+    shown = rows if limit is None else rows[:limit]
+    for rel, status in shown:
+        color, mark, note = style[status]
+        print(f"  {color}{mark} {rel}{note}{RESET}")
+    if len(shown) < len(rows):
+        print(f"  ... dan {len(rows) - len(shown)} file lainnya")
+    return counts
+
+
+def confirm_preview(prompt, printer, limit=30):
+    """Tampilkan pratinjau lalu minta konfirmasi. 'l' = lihat daftar lengkap."""
+    printer(limit)
+    while True:
+        answer = ask(f"{prompt} (y/n, l = lihat semua): ").lower()
+        if answer in ("l", "lihat"):
+            printer(None)
+            continue
+        return answer in ("y", "ya")
+
+
 def menu_convert_file():
     print_banner()
     print("--- 1. Convert File ke Markdown ---")
@@ -681,34 +792,38 @@ def menu_convert_folder():
     output = os.path.join(target_dir, name)
 
     exts = parse_exts(ask("Filter ekstensi (kosong = semua, contoh: .py,.js): "))
+    ignore = parse_ignore(ask("Abaikan file/folder (kosong = tidak ada, contoh: tests,*.min.js): "))
 
     if os.path.exists(output) and not confirm(f"'{name}' sudah ada. Timpa?"):
         print("Dibatalkan.")
         pause()
         return
-    if not confirm(f"Convert isi folder '{folder_name}' ke '{name}'?"):
+
+    print("\nMemindai folder...")
+    scanned = scan_folder(target_dir, exts, MAX_FILE_BYTES, ignore, exclude_path=output)
+    included, skipped, ignored = scanned
+    if not included:
+        print_bundle_preview(included, skipped, ignored)
+        print(f"{YELLOW}Tidak ada file yang cocok untuk digabungkan.{RESET}")
+        pause()
+        return
+
+    if not confirm_preview(
+            f"Convert isi folder '{folder_name}' ke '{name}'?",
+            lambda limit: print_bundle_preview(included, skipped, ignored, limit)):
         print("Konversi folder dibatalkan.")
         pause()
         return
 
     try:
-        stats = bundle_folder(target_dir, output, exts)
+        stats = bundle_folder(target_dir, output, scanned=scanned)
     except OSError as e:
         print(f"{RED}Gagal membuat bundle: {e}{RESET}")
         pause()
         return
 
-    if stats["count"] == 0:
-        print(f"{YELLOW}Tidak ada file yang cocok untuk digabungkan.{RESET}")
-    else:
-        print(f"{GREEN}Berhasil menggabungkan {stats['count']} file ke '{name}'!{RESET}")
-        print(f"Ukuran {format_size(stats['chars'])} | ~{stats['tokens']:,} token (perkiraan kasar)")
-    if stats["skipped"]:
-        print(f"{YELLOW}{len(stats['skipped'])} file dilewati:{RESET}")
-        for rel, reason in stats["skipped"][:10]:
-            print(f"  - {rel}: {reason}")
-        if len(stats["skipped"]) > 10:
-            print(f"  ... dan {len(stats['skipped']) - 10} lainnya")
+    print(f"{GREEN}Berhasil menggabungkan {stats['count']} file ke '{name}'!{RESET}")
+    print(f"Ukuran {format_size(stats['chars'])} | ~{stats['tokens']:,} token (perkiraan kasar)")
 
     if stats["count"] and shutil.which("termux-clipboard-set"):
         if confirm("Salin hasil ke clipboard?"):
@@ -742,15 +857,19 @@ def menu_restore():
             print("Dibatalkan.")
             pause()
             return
-        existing = existing_targets(entries, dest)
-        overwrite = False
-        if existing:
-            print(f"{YELLOW}{len(existing)} file sudah ada di tujuan.{RESET}")
-            overwrite = confirm("Timpa file yang sudah ada? (n = lewati saja)")
-        if not confirm(f"Ekstrak {len(entries)} file ke '{dest}'?"):
+        counts = {}
+
+        def show(limit):
+            counts.update(print_restore_preview(entries, dest, limit))
+
+        if not confirm_preview(f"Ekstrak {len(entries)} file ke '{dest}'?", show):
             print("Ekstraksi dibatalkan.")
             pause()
             return
+        overwrite = False
+        if counts.get("sudah ada"):
+            print(f"{YELLOW}{counts['sudah ada']} file sudah ada di tujuan.{RESET}")
+            overwrite = confirm("Timpa file yang sudah ada? (n = lewati saja)")
         ok = 0
         for rel, status, msg in extract_entries(entries, dest, overwrite):
             if status == "ok":
@@ -839,7 +958,7 @@ def interactive_menu():
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        prog="md.py",
+        prog="MDc",
         description="MDs - Ultimate Markdown Converter (tanpa argumen = mode interaktif)")
     sub = parser.add_subparsers(dest="command")
 
@@ -852,14 +971,21 @@ def build_parser():
     p_bundle.add_argument("folder")
     p_bundle.add_argument("-o", "--output", help="file .md hasil (default: <folder>/<nama>.md)")
     p_bundle.add_argument("--ext", help="filter ekstensi, mis. .py,.js")
+    p_bundle.add_argument("--ignore", action="append", metavar="POLA",
+                          help="abaikan file/folder sesuai pola, dipisah koma, boleh diulang "
+                               "(mis. tests,*.min.js)")
     p_bundle.add_argument("--max-kb", type=int, default=MAX_FILE_BYTES // 1000,
                           help="lewati file teks lebih besar dari ini (KB)")
     p_bundle.add_argument("--force", action="store_true")
+    p_bundle.add_argument("-n", "--dry-run", action="store_true",
+                          help="tampilkan daftar file saja, tanpa menulis apa pun")
 
     p_restore = sub.add_parser("restore", help="pulihkan file/bundle Markdown ke file asli")
     p_restore.add_argument("markdown")
     p_restore.add_argument("-d", "--dest", help="folder tujuan (default: folder file .md)")
     p_restore.add_argument("--force", action="store_true", help="timpa file yang sudah ada")
+    p_restore.add_argument("-n", "--dry-run", action="store_true",
+                           help="tampilkan daftar file saja, tanpa menulis apa pun")
     return parser
 
 
@@ -889,15 +1015,24 @@ def run_cli(args):
             return fail(f"folder tidak ditemukan: {args.folder}")
         folder = os.path.abspath(args.folder)
         output = args.output or os.path.join(folder, os.path.basename(folder) + ".md")
-        if os.path.exists(output) and not args.force:
+        if os.path.exists(output) and not args.force and not args.dry_run:
             return fail(f"'{output}' sudah ada (gunakan --force untuk menimpa)")
+        scanned = scan_folder(folder, parse_exts(args.ext), args.max_kb * 1000,
+                              parse_ignore(args.ignore), exclude_path=output)
+        included, skipped, ignored = scanned
+        if not included:
+            return fail("tidak ada file yang cocok untuk digabungkan")
+        if args.dry_run:
+            print_bundle_preview(included, skipped, ignored, limit=None)
+            print("\n(dry-run: tidak ada file yang ditulis)")
+            return 0
         try:
-            stats = bundle_folder(folder, output, parse_exts(args.ext), args.max_kb * 1000)
+            stats = bundle_folder(folder, output, scanned=scanned)
         except OSError as e:
             return fail(e)
-        if stats["count"] == 0:
-            return fail("tidak ada file yang cocok untuk digabungkan")
         print(f"OK: {stats['count']} file -> {output} (~{stats['tokens']:,} token)")
+        if ignored:
+            print(f"  diabaikan oleh pola: {ignored} file")
         for rel, reason in stats["skipped"]:
             print(f"  dilewati: {rel} ({reason})")
         return 0
@@ -912,6 +1047,10 @@ def run_cli(args):
         dest = args.dest or os.path.dirname(os.path.abspath(args.markdown))
         entries = parse_bundle(content)
         if entries:
+            if args.dry_run:
+                print_restore_preview(entries, dest, limit=None)
+                print("\n(dry-run: tidak ada file yang ditulis)")
+                return 0
             bad = 0
             for rel, status, msg in extract_entries(entries, dest, args.force):
                 print(f"  [{status}] {rel} {msg}".rstrip())
@@ -925,6 +1064,10 @@ def run_cli(args):
         target = safe_join(dest, name)
         if target is None:
             return fail("nama file tidak aman")
+        if args.dry_run:
+            print(f"Akan menulis: {target}" + (" (sudah ada)" if os.path.exists(target) else ""))
+            print("\n(dry-run: tidak ada file yang ditulis)")
+            return 0
         if os.path.exists(target) and not args.force:
             return fail(f"'{target}' sudah ada (gunakan --force untuk menimpa)")
         try:

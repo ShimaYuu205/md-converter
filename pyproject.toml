@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,6 +7,7 @@ name = "md-converter"
 dynamic = ["version"]
 description = "MDs - konversi dokumen/kode ke Markdown, bundle folder proyek, dan pulihkan kembali"
 readme = "README.md"
+license = { text = "MIT" }
 requires-python = ">=3.8"
 authors = [{ name = "ShimaYuu" }]
 keywords = ["markdown", "converter", "cli", "pdf", "docx", "termux", "bundle"]
@@ -20,3 +21,4 @@ py-modules = ["md"]
 
 [tool.setuptools.dynamic]
 version = { attr = "md.VERSION" }
+
